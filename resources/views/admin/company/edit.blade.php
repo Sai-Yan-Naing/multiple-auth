@@ -99,15 +99,6 @@
                                 @enderror
                             </div>
                             <div class="form-group mb-2">
-                                <label class="mb-2" for="password">Password:</label>
-                                <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" placeholder="Enter password" name="password"  value="{{ old('password') }}" autocomplete="password" autofocus>
-                                @error('password')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                            <div class="form-group mb-2">
                                 <label class="mb-2" for="address">Address:</label>
                                 <input type="text" class="form-control @error('address') is-invalid @enderror" id="address" placeholder="Enter address" name="address" value="{{ old('address',$company->address) }}" autocomplete="address" autofocus>
                                 @error('address')

@@ -3,19 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\Company;
+use App\Employee;
+use App\Exports\EmployeeExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
 
 class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $companies = Company::
-        where ( 'name', 'LIKE', '%' . $request->filter . '%' )
+        $filter = $request->filter;
+        $employees = Employee::
+        where ( 'first_name', 'LIKE', '%' . $filter . '%' )
+        ->orwhere ( 'last_name', 'LIKE', '%' . $filter . '%' )
+        ->orwhere ( 'department', 'LIKE', '%' . $filter . '%' )
+        ->orwhereHas('company', function ($query) use ($request) {
+            $query->where('name', 'like', "%{$request->filter}%");
+        })
         ->paginate(2);
-        return view('admin.dashboard.index',compact('companies'));
+        return view('admin.dashboard.index',compact('employees','filter'));
     }
 
     public function listCompany()
@@ -32,14 +41,12 @@ class UserController extends Controller
         $request->validate([
             'name'              => 'required|string|max:255',
             'email'             => 'required|string|email|max:255|unique:companies',
-            'password'          => 'required|string|min:8',
             'address'            => 'required|string',
         ]);
 
         $company = Company::create([
             'name'      => $request->name,
             'email'     => $request->email,
-            'password'  => Hash::make($request->password),
             'address'   => $request->address,
         ]);
         return redirect()->route('listCompany');
@@ -60,14 +67,12 @@ class UserController extends Controller
                                     'string','email','max:255',
                                     Rule::unique('companies')->ignore($company->id,'id')
                                 ],
-            'password'          => 'required|string|min:8',
             'address'            => 'required|string',
         ]);
 
         $company->update([
             'name'      => $request->name,
             'email'     => $request->email,
-            'password'  => Hash::make($request->password),
             'address'   => $request->address,
         ]);
         return redirect()->route('listCompany');
@@ -78,4 +83,11 @@ class UserController extends Controller
         $company->delete();
         return redirect()->route('listCompany');
     }
+
+    public function export($filter='')
+    {
+        // return $filter;
+        return Excel::download(new EmployeeExport($filter), 'employee.csv');
+    }
+
 }
